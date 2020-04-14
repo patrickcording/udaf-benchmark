@@ -11,6 +11,8 @@ object Benchmark extends App {
     .appName("UDAF Benchmark")
     .getOrCreate()
 
+  import spark.implicits._
+
   // Load data
   println("Loading dataframe...")
   val df = (1 to 1000000).map(_ => Random.nextInt(100).toString).toDF("value")//.repartition(10)
