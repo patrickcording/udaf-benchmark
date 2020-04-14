@@ -1,8 +1,7 @@
-import method.{AggregatorMethod, AggregatorUdafMethod, CustomUdafMethod, MapPartitionsMethod, RddApiMethod}
+import method._
 import org.apache.spark.sql.SparkSession
 import org.scalameter._
 
-import scala.io.Source
 import scala.util.Random
 
 object Benchmark extends App {
@@ -33,5 +32,4 @@ object Benchmark extends App {
 
   println(results)
   println(timings)
-
 }
