@@ -11,17 +11,10 @@ object Benchmark extends App {
     .master("local[4]")
     .appName("UDAF Benchmark")
     .getOrCreate()
-  import spark.implicits._
 
   // Load data
   println("Loading dataframe...")
   val df = (1 to 1000000).map(_ => Random.nextInt(100).toString).toDF("value")//.repartition(10)
-//    .repartition(4).cache()
-//
-//  val df = spark.read.option("header", "true").csv("/Users/patrick.cording/data/10K_Lending_Club_Loans.csv")
-//    .select($"emp_title" as "value")
-//    .filter($"value" isNotNull)
-  println(df.count())
 
   val methods = List(
     new MapPartitionsMethod,
