@@ -1,37 +1,53 @@
 import method._
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
 import org.scalameter._
-
-import scala.util.Random
 
 object Benchmark extends App {
 
   val spark = SparkSession.builder
-    .master("local[4]")
+    .master("local[*]")
     .appName("UDAF Benchmark")
+    .config("spark.sql.codegen.wholeStage", false)
+//    .config("spark.executor.memory", "4g")
+//    .config("spark.driver.memory", "4g")
     .getOrCreate()
 
-  import spark.implicits._
-
-  // Load data
-  println("Loading dataframe...")
-  val df = (1 to 1000000).map(_ => Random.nextInt(100).toString).toDF("value")//.repartition(10)
+  println("Generating dataframe...")
+  val df = spark.range(1000000000)
+    .toDF("salary")
+    .withColumn("foo", col("salary").cast("string"))
+    .withColumn("bar", concat(col("foo"), col("foo")))
 
   val methods = List(
-    new MapPartitionsMethod,
-    new RddApiMethod,
     new AggregatorMethod,
     new AggregatorUdafMethod,
-    new CustomUdafMethod
+    new RddApiMethod,
+    new CustomUdafMethod,
   )
 
-  val timer = config(Key.exec.benchRuns -> 1, Key.verbose -> false)
+  println("Writing dataframe...")
+  df.write
+    .option("compression", "uncompressed")
+    .mode("overwrite")
+    .parquet("tmp/data")
+
+  println("Reading data...")
+  val df2 = spark.read.parquet("tmp/data")
+
+  val timer = config(Key.exec.benchRuns -> 3, Key.verbose -> false)
 //    .withWarmer { new Warmer.Default }
 //    .withMeasurer { new Measurer.IgnoringGC }
 
-  val results = methods.map(method => method.run(df))
-  val timings = methods.map(method => timer.measure(method.run(df)).value)
+  Thread.sleep(30000)
 
-  println(results)
+  println("Running aggregators...")
+//  val results = methods.map(method => method.run(df))
+  val timings = methods.map(method => timer.measure(method.run(df2)).value)
+
+//  println(results)
   println(timings)
+
+  println("Keep Spark UI open")
+  Thread.sleep(1000000)
 }
